@@ -1,0 +1,26 @@
+{
+  "name": "@weebapp/prettier-config",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": {
+    ".": "./index.js"
+  },
+  "main": "index.js",
+  "scripts": {
+    "clean": "rm -rf .turbo node_modules",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "format:fix": "prettier --write . --ignore-path ../../.gitignore",
+    "typecheck": "tsc --noEmit"
+  },
+  "prettier": "@weebapp/prettier-config",
+  "devDependencies": {
+    "@trivago/prettier-plugin-sort-imports": "^4.3.0",
+    "@weebapp/typescript-config": "*",
+    "prettier": "^3.2.5",
+    "prettier-plugin-packagejson": "2.4.12",
+    "prettier-plugin-tailwindcss": "^0.5.11",
+    "typescript": "^5.4.2"
+  }
+}

@@ -1,0 +1,11 @@
+node_modules
+.next
+public
+dist
+build
+android
+ios
+.expo
+tsconfig.tsbuildinfo
+.git
+.turbo

@@ -1,0 +1,39 @@
+{
+	"name": "@weebapp/authentication",
+	"version": "1.0.0",
+	"private": true,
+	"license": "MIT",
+	"files": [
+		"src/router.ts"
+	],
+	"scripts": {
+		"dev": "wrangler dev src/index.ts",
+		"deploy": "wrangler deploy --minify src/index.ts",
+		"format": "prettier --check . --ignore-path ../../.gitignore",
+		"format:fix": "prettier --write . --ignore-path ../../.gitignore",
+		"lint": "eslint .",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@weebapp/db": "*",
+		"drizzle-orm": "^0.30.1",
+		"hash.js": "^1.1.7",
+		"hono": "^4.0.10",
+		"jose": "^5.2.3"
+	},
+	"devDependencies": {
+		"@cloudflare/workers-types": "^4.20240222.0",
+		"@typescript-eslint/parser": "^7.1.1",
+		"@weebapp/eslint-config": "*",
+		"@weebapp/typescript-config": "*",
+		"typescript": "^5.4.2",
+		"wrangler": "^3.32.0"
+	},
+	"prettier": "@weebapp/prettier-config",
+	"eslintConfig": {
+		"extends": [
+			"@weebapp/eslint-config/next"
+		],
+		"root": true
+	}
+}

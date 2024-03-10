@@ -1,0 +1,29 @@
+{
+  "name": "@weebapp/db",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "clean": "rm -rf .turbo && rm -rf node_modules",
+    "db:generate": "drizzle-kit generate:sqlite --schema=./schemas",
+    "db:instrospect": "drizzle-kit introspect:sqlite --schema=./schemas",
+    "db:push": "drizzle-kit push:sqlite",
+    "db:drop": "drizzle-kit drop",
+    "db:up": "drizzle-kit up:sqlite",
+    "db:check": "drizzle-kit check:sqlite",
+    "db:studio": "drizzle-kit studio --verbose",
+    "lint": "eslint . --ext .ts --max-warnings 0",
+    "lint:fix": "eslint . --ext .ts --max-warnings 0 --fix"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.5.3",
+    "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.30.1",
+    "drizzle-zod": "^0.5.1",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.20.14"
+  }
+}

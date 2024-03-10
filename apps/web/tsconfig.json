@@ -1,18 +1,15 @@
 {
-  "extends": "@repo/typescript-config/nextjs.json",
-  "compilerOptions": {
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ]
-  },
+  "extends": "@weebapp/typescript-config/nextjs.json",
   "include": [
     "next-env.d.ts",
     "next.config.js",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "apps/web/.eslintrc.js",
+    "postcss.config.js",
+    ".eslintrc.js",
+    "tailwind.config.js"
   ],
   "exclude": ["node_modules"]
 }

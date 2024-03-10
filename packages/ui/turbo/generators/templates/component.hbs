@@ -1,8 +1,11 @@
-export const {{ pascalCase name }} = ({ children }: { children: React.ReactNode }) => {
+import React from 'react';
+import { View, Text } from 'react-native';
+
+export const {{ pascalCase name }} = ({ children }) => {
   return (
-    <div>
-      <h1>{{ pascalCase name }} Component</h1>
+    <View>
+      <Text>{{ pascalCase name }} Component</Text>
       {children}
-    </div>
+    </View>
   );
 };

@@ -1,0 +1,42 @@
+{
+  "name": "@weebapp/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "files": [
+    "./base.js",
+    "./nextjs.js",
+    "./react.js",
+    "./library.js"
+  ],
+  "scripts": {
+    "clean": "rm -rf .turbo node_modules",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@next/eslint-plugin-next": "latest",
+    "@typescript-eslint/eslint-plugin": "latest",
+    "@typescript-eslint/parser": "latest",
+    "eslint-config-turbo": "latest",
+    "eslint-plugin-import": "latest",
+    "eslint-plugin-jsx-a11y": "latest",
+    "eslint-plugin-react": "latest",
+    "eslint-plugin-react-hooks": "latest"
+  },
+  "devDependencies": {
+    "@types/eslint": "latest",
+    "@weebapp/prettier-config": "*",
+    "@weebapp/typescript-config": "*",
+    "eslint": "latest",
+    "eslint-config-universe": "^12.0.0",
+    "prettier": "latest",
+    "typescript": "latest"
+  },
+  "eslintConfig": {
+    "root": true,
+    "extends": [
+      "./base.js"
+    ]
+  },
+  "prettier": "@weebapp/prettier-config"
+}

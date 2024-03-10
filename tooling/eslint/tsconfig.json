@@ -1,0 +1,7 @@
+{
+  "extends": "@weebapp/typescript-config/base.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "node_modules/.cache/tsbuildinfo.json",
+    "incremental": true
+  }
+}
