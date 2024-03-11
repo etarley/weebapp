@@ -3,6 +3,8 @@ import React from "react";
 import { Text, View } from "react-native";
 
 import { Button } from "~/components/ui/Button";
+
+// import { Button } from "~/components/ui/Button";
 import { Input } from "~/components/ui/Input";
 import { InputLabel } from "~/components/ui/InputLabel";
 
@@ -26,8 +28,8 @@ export default function SignupView() {
           </Text>
         </View>
 
-        <View className="flex gap-2">
-          <View className="flex gap-1">
+        <View className="flex gap-4">
+          <View className="flex gap-2">
             <InputLabel className="sr-only" inputId="email">
               Email
             </InputLabel>

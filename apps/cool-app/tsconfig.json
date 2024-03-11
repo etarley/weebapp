@@ -1,13 +1,29 @@
 {
-  "extends": ["expo/tsconfig.base", "@weebapp/typescript-config/base.json"],
+  "extends": [
+    "expo/tsconfig.base",
+    "@weebapp/typescript-config/base.json"
+  ],
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "~/*": ["./*"]
+      "~/*": [
+        "./*"
+      ]
     },
     "jsx": "react-native",
-    "types": ["nativewind/types"]
+    "types": [
+      "nativewind/types"
+    ]
   },
-  "include": ["app", "*.ts", "*.js", "components"],
-  "exclude": ["node_modules"]
+  "include": [
+    "app",
+    "*.ts",
+    "*.js",
+    "components",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }
