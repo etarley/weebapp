@@ -4,7 +4,10 @@ import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
 export const users = sqliteTable('users', {
   id: integer('id').primaryKey(),
+  name: text('name').notNull(),
   email: text('email').notNull().unique(),
+  emailVerified: integer('email_verified', { mode: 'timestamp' }),
+  avatarUrl: text('avatar_url'),
   password: text('password').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CAST(strftime('%s', 'now') AS INTEGER)`).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).default(sql`CAST(strftime('%s', 'now') AS INTEGER)`).notNull(),
@@ -19,3 +22,4 @@ export const selectUserSchema = createSelectSchema(users, {
   createdAt: (schema) => schema.createdAt.transform((value) => new Date(`${value} UTC`)),
   updatedAt: (schema) => schema.updatedAt.transform((value) => new Date(`${value} UTC`)),
 });
+
