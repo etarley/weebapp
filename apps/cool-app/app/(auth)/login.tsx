@@ -30,8 +30,16 @@ export default function LoginView() {
   const { signIn } = useAuth();
 
   const onSubmit = async ({ email, password }: FormData) => {
-    const token = await loginUser(email, password);
-    signIn(token);
+    try {
+      const { token, user } = await loginUser(email, password);
+      signIn(token, user);
+    } catch (error) {
+      if (error instanceof Error) {
+        alert(error.message);
+      } else {
+        alert("An unexpected error occurred");
+      }
+    }
   };
 
   return (

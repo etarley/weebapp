@@ -14,41 +14,37 @@ const storage: StateStorage = {
   },
 };
 
-// interface User {
-//   id: string;
-//   email: string;
-// }
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  avatarUrl: string | null;
+}
 
 interface AuthState {
-  // user: User | null;
+  user: User | null;
   token: string | null;
   isLoading: boolean;
   error: string | null;
-  signIn: (
-    token: string,
-    // user: User
-  ) => Promise<void>;
+  signIn: (token: string, user: User) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
 const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
-      // user: null,
+      user: null,
       token: null,
       isLoading: false,
       error: null,
-      signIn: async (
-        token: string,
-        // user: User
-      ) => {
+      signIn: async (token: string, user: User) => {
         set({ isLoading: true });
         try {
           await SecureStore.setItemAsync("token", token);
-          // await SecureStore.setItemAsync("user", JSON.stringify(user));
+          await SecureStore.setItemAsync("user", JSON.stringify(user));
           set({
             token,
-            // user,
+            user,
             isLoading: false,
             error: null,
           });
@@ -61,12 +57,8 @@ const useAuthStore = create<AuthState>()(
         try {
           await SecureStore.deleteItemAsync("token");
           await SecureStore.deleteItemAsync("user");
-          set({
-            token: null,
-            // user: null,
-            isLoading: false,
-            error: null,
-          });
+          await SecureStore.deleteItemAsync("auth-storage");
+          set({ token: null, user: null, isLoading: false, error: null });
         } catch (error) {
           set({ isLoading: false, error: `Failed to sign out: ${error}` });
         }
@@ -77,23 +69,16 @@ const useAuthStore = create<AuthState>()(
       storage: createJSONStorage(() => storage),
       partialize: (state) => ({
         token: state.token,
-        // user: state.user
+        user: state.user,
       }),
     },
   ),
 );
 
 export function useAuth() {
-  const {
-    // user,
-    token,
-    isLoading,
-    error,
-    signIn,
-    signOut,
-  } = useAuthStore();
+  const { user, token, isLoading, error, signIn, signOut } = useAuthStore();
   return {
-    // user,
+    user,
     token,
     isLoading,
     error,

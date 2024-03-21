@@ -9,14 +9,26 @@ const api = axios.create({
   },
 });
 
-export async function registerUser(email: string, password: string) {
-  const response = await api.post("/register", { email, password });
+export async function registerUser(
+  email: string,
+  password: string,
+  name: string,
+) {
+  const response = await api.post("/register", { email, password, name });
   return response.data;
 }
 
 export async function loginUser(email: string, password: string) {
-  const response = await api.post("/login", { email, password });
-  return response.data.token;
+  try {
+    const response = await api.post("/login", { email, password });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data.error || "Failed to login");
+    } else {
+      throw new Error("Failed to login");
+    }
+  }
 }
 
 export async function fetchProtectedData(token: string) {

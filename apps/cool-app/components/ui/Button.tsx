@@ -64,6 +64,7 @@ export const Button = ({
 
   const scaleValue = useSharedValue(1);
   const opacityValue = useSharedValue(1);
+  const rippleValue = useSharedValue(0);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scaleValue.value }],
@@ -72,10 +73,12 @@ export const Button = ({
 
   const handlePressIn = () => {
     scaleValue.value = withSpring(0.95);
+    opacityValue.value = withSpring(0.8);
   };
 
   const handlePressOut = () => {
     scaleValue.value = withSpring(1);
+    opacityValue.value = withSpring(1);
   };
 
   const handlePress = () => {

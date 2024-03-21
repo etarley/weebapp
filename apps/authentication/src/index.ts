@@ -1,8 +1,15 @@
-import { connectDb, insertUserSchema, selectUserSchema, users } from '@weebapp/db';
+import { DrizzleSQLiteAdapter } from '@lucia-auth/adapter-drizzle';
+import { connectDb, insertUserSchema, selectUserSchema, sessions, users } from '@weebapp/db';
+
 import { eq } from 'drizzle-orm';
 import { sha256 } from 'hash.js';
 import { Hono } from 'hono';
-import { SignJWT, jwtVerify } from 'jose';
+import { Lucia, TimeSpan, generateId } from 'lucia';
+import * as z from 'zod';
+const authHeaderSchema = z.object({
+  authorization: z.string().startsWith('Bearer '),
+});
+
 
 const app = new Hono();
 
@@ -14,39 +21,43 @@ app.get('/', (ctx) => {
 app.post('/register', async (ctx) => {
   const databaseUrl = ctx.env?.DATABASE_URL as string;
   const authToken = ctx.env?.DATABASE_AUTH_TOKEN as string | undefined;
-
   const db = connectDb({
     url: databaseUrl,
     authToken: authToken,
   });
 
-  const { email, password } = await ctx.req.json();
+ 
+  
 
-  // Validate the user input using insertUserSchema
-  const validatedData = insertUserSchema.parse({ email, password });
+  const { email, password, name, avatarUrl } = await ctx.req.json();
+
+  //generate user id
+  const id = generateId(15);
+
+    // Validate the user input using insertUserSchema
+  const validatedData = insertUserSchema.parse({ email, password, name, avatarUrl, id });
 
   // Hash the password
   const hashedPassword = sha256().update(validatedData.password).digest('hex');
 
   try {
-    // Insert the user into the database
-    await db.insert(users).values({ email: validatedData.email, password: hashedPassword });
-    return ctx.json({ message: 'User registered successfully' });
+    // Validate and create the user using Lucia Auth
+    const user = await db.insert(users).values({ id, email: validatedData.email, password: hashedPassword, name, avatarUrl }).execute().then(
+      selectUserSchema.parse
+    );
+    return ctx.json({ message: 'User registered successfully', user });
   } catch (error) {
-
-    
-    // Handle email already exists error or other errors based on the unique constraint violation error
-    if (error instanceof Error && error.message === "SQLITE_CONSTRAINT: SQLite error: UNIQUE constraint failed: users.email") {
+    if (error instanceof Error && error.message === 'AUTH_DUPLICATE_KEY_ERROR') {
       return ctx.json({ error: 'Email already exists' }, 409);
-    }
-    else if (error instanceof Error) {
-      
-      
-      // Handle other errors
-      return ctx.json({ error: error.message }, 500);
+    } else if (error instanceof Error && error.message === "SQLITE_CONSTRAINT: SQLite error: UNIQUE constraint failed: users.email") {
+      return ctx.json({ error: 'Email already exists' }, 409);
+    } {
+      console.error(error);
+      return ctx.json({ error: 'Failed to register user' }, 500);
     }
   }
 });
+
 
 // Login and generate JWT
 app.post('/login', async (ctx) => {
@@ -58,8 +69,12 @@ app.post('/login', async (ctx) => {
     url: databaseUrl,
     authToken: authToken,
   });
+  const adapter = new DrizzleSQLiteAdapter(db, sessions, users);
+  const lucia = new Lucia(adapter,
+);
 
   const { email, password } = await ctx.req.json();
+   
 
   try {
     // Find the user by email
@@ -68,6 +83,7 @@ app.post('/login', async (ctx) => {
       .from(users)
       .where(eq(users.email, email))
       .execute();
+    
 
     const user = selectUserSchema.array().parse(userResults)[0];
 
@@ -80,15 +96,11 @@ app.post('/login', async (ctx) => {
     if (user.password !== hashedPassword) {
       return ctx.json({ error: 'Invalid email or password' }, 401);
     }
+  const session = await lucia.createSession(user.id, {
+      expiresAt: Date.now() + new TimeSpan(30,'d').milliseconds(),
+    });
 
-    // Generate JWT
-    const jwt = await new SignJWT({ userId: user.id })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setIssuedAt()
-      .setExpirationTime('1h')
-      .sign(new TextEncoder().encode(secretKey));
-
-    return ctx.json({ token: jwt });
+    return ctx.json({ token: session.id, user: { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl } });
   } catch (error) {
     console.error(error);
     return ctx.json({ error: 'Failed to login' }, 500);
@@ -99,37 +111,63 @@ app.post('/login', async (ctx) => {
 app.get('/protected', async (ctx) => {
   const databaseUrl = ctx.env?.DATABASE_URL as string;
   const authToken = ctx.env?.DATABASE_AUTH_TOKEN as string | undefined;
-  const secretKey = ctx.env?.JWT_SECRET as string;
 
   const db = connectDb({
     url: databaseUrl,
     authToken: authToken,
   });
 
-  const authHeader = ctx.req.header('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return ctx.json({ error: 'Unauthorized' }, 401);
-  }
-
-  const token = authHeader.split(' ')[1];
+  const adapter = new DrizzleSQLiteAdapter(db, sessions, users);
+  const lucia = new Lucia(adapter);
 
   try {
-    // Verify the JWT
-    const { payload } = await jwtVerify(token, new TextEncoder().encode(secretKey));
-    const userId = payload.userId as number;
+    // Validate the Authorization header using Zod
+    const { authorization } = authHeaderSchema.parse({
+      authorization: ctx.req.header('Authorization'),
+    });
 
-    // Fetch the user data based on the userId from the JWT
-    const user = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .execute()
-      .then(selectUserSchema.parse);
+    const token = lucia.readBearerToken(authorization);
+    if (!token) {
+      return ctx.json({ error: 'Missing or invalid bearer token' }, 401);
+    }
 
-    return ctx.json({ message: 'Access granted', user });
+    try {
+      const session = await lucia.validateSession(token);
+      if (!session.user) {
+        return ctx.json({ error: 'Unauthorized: User session not found' }, 401);
+      }
+
+      const userId = session.user.id;
+
+      // Fetch the user data based on the userId from the session
+      const userResults = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, userId))
+        .execute();
+      
+      const user = selectUserSchema.array().parse(userResults)[0];
+
+      return ctx.json({ message: 'Access granted', user: { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl, emailVerified: user.emailVerified } });
+    } catch (error) {
+      console.error(error);
+
+      if (error instanceof z.ZodError) {
+        return ctx.json({ error: 'Unauthorized: Invalid user data' }, 401);
+      } else if (error instanceof Error && error.message.startsWith('SQLITE')) {
+        return ctx.json({ error: 'Database error: Failed to fetch user data' }, 500);
+      } else {
+        return ctx.json({ error: 'Unauthorized: Failed to validate user session' }, 401);
+      }
+    }
   } catch (error) {
     console.error(error);
-    return ctx.json({ error: 'Unauthorized' }, 401);
+
+    if (error instanceof z.ZodError) {
+      return ctx.json({ error: 'Invalid Authorization header format' }, 400);
+    } else {
+      return ctx.json({ error: 'Unauthorized: Failed to authenticate' }, 401);
+    }
   }
 });
 

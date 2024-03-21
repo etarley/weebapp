@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useRouter } from "expo-router";
 import React from "react";
 import { Controller, useForm } from "react-hook-form";
-import { Text, View } from "react-native";
+import { Alert, Text, View } from "react-native";
 import { z } from "zod";
 
 import { Button } from "~/components/ui/Button";
@@ -12,6 +12,7 @@ import { registerUser } from "~/lib/api";
 
 const schema = z
   .object({
+    name: z.string().min(2),
     email: z.string().email(),
     confirmEmail: z.string().email(),
     password: z.string().min(6),
@@ -39,9 +40,20 @@ export default function SignupView() {
 
   const router = useRouter();
 
-  const onSubmit = ({ email, password }: FormData) => {
-    registerUser(email, password);
-    router.replace("/login");
+  const onSubmit = ({ name, email, password }: FormData) => {
+    registerUser(email, password, name);
+    Alert.alert(
+      "Registration Successful",
+      "You will be redirected to the login page.",
+      [
+        {
+          text: "OK",
+          onPress: () => {
+            router.replace("/login");
+          },
+        },
+      ],
+    );
   };
 
   return (
@@ -52,10 +64,35 @@ export default function SignupView() {
             Create an account
           </Text>
           <Text className="text-sm text-muted-foreground">
-            Enter your email and password to create your account
+            Enter your name, email, and password to create your account
           </Text>
         </View>
         <View className="flex gap-4">
+          <View className="flex gap-2">
+            <InputLabel className="sr-only" inputId="name">
+              Name
+            </InputLabel>
+            <Controller
+              control={control}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Input
+                  id="name"
+                  placeholder="Your name"
+                  autoCapitalize="words"
+                  autoCorrect={false}
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                />
+              )}
+              name="name"
+            />
+            {errors.name && (
+              <Text className="text-red-500 text-sm">
+                {errors.name.message}
+              </Text>
+            )}
+          </View>
           <View className="flex gap-2">
             <InputLabel className="sr-only" inputId="email">
               Email
@@ -91,7 +128,7 @@ export default function SignupView() {
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input
                   id="confirmEmail"
-                  placeholder="Confirm your email"
+                  placeholder="Your email"
                   autoCapitalize="none"
                   autoComplete="email"
                   autoCorrect={false}
@@ -118,7 +155,7 @@ export default function SignupView() {
                 <Input
                   id="password"
                   secureTextEntry
-                  placeholder="********"
+                  placeholder="Your password"
                   autoCapitalize="none"
                   autoComplete="password"
                   autoCorrect={false}
