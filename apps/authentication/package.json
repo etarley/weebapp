@@ -31,7 +31,7 @@
 		"@weebapp/eslint-config": "*",
 		"@weebapp/typescript-config": "*",
 		"typescript": "^5.4.3",
-		"wrangler": "^3.36.0"
+		"wrangler": "^3.37.0"
 	},
 	"prettier": "@weebapp/prettier-config",
 	"eslintConfig": {

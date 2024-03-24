@@ -48,9 +48,9 @@ app.post('/register', async (ctx) => {
     return ctx.json({ message: 'User registered successfully', user });
   } catch (error) {
     if (error instanceof Error && error.message === 'AUTH_DUPLICATE_KEY_ERROR') {
-      return ctx.json({ error: 'Email already exists' }, 409);
+      return ctx.json({ error: {type:"email", message:"Email already in use"} }, 409);
     } else if (error instanceof Error && error.message === "SQLITE_CONSTRAINT: SQLite error: UNIQUE constraint failed: users.email") {
-      return ctx.json({ error: 'Email already exists' }, 409);
+      return ctx.json({ error: {type:"email", message:"Email already in use"} }, 409);
     } {
       console.error(error);
       return ctx.json({ error: 'Failed to register user' }, 500);
@@ -88,13 +88,13 @@ app.post('/login', async (ctx) => {
     const user = selectUserSchema.array().parse(userResults)[0];
 
     if (!user) {
-      return ctx.json({ error: 'Invalid email or password' }, 401);
+      return ctx.json({ error: { type: 'email', message: 'The email address provided is not registered with our system.'} }, 401);
     }
 
     // Compare the provided password with the hashed password
     const hashedPassword = sha256().update(password).digest('hex');
     if (user.password !== hashedPassword) {
-      return ctx.json({ error: 'Invalid email or password' }, 401);
+      return ctx.json({ error: {type: 'password', message:'Incorrect password. Please try again'} }, 401);
     }
   const session = await lucia.createSession(user.id, {
       expiresAt: Date.now() + new TimeSpan(30,'d').milliseconds(),

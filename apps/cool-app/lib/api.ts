@@ -14,8 +14,21 @@ export async function registerUser(
   password: string,
   name: string,
 ) {
-  const response = await api.post("/register", { email, password, name });
-  return response.data;
+  try {
+    const response = await api.post("/register", { email, password, name });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(
+        error.response?.data.error.message || "Failed to register",
+        {
+          cause: error.response?.data.error.type,
+        },
+      );
+    } else {
+      throw new Error("Failed to register");
+    }
+  }
 }
 
 export async function loginUser(email: string, password: string) {
@@ -24,7 +37,9 @@ export async function loginUser(email: string, password: string) {
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      throw new Error(error.response?.data.error || "Failed to login");
+      throw new Error(error.response?.data.error.message || "Failed to login", {
+        cause: error.response?.data.error.type,
+      });
     } else {
       throw new Error("Failed to login");
     }

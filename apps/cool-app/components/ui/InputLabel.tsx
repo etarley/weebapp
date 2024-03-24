@@ -21,9 +21,9 @@ const InputLabel: React.FC<InputLabelProps> = ({
       {...props}
       nativeID={inputId}
       accessibilityLabel={props.children as string}
-      style={[{ fontWeight: "bold" }, style]}
+      style={[style]}
       className={cn(
-        "mb-2 text-sm text-foreground",
+        "mb-2 font-medium text-foreground",
         required && "after:text-red-500 after:content-['*']",
         className,
       )}

@@ -1,18 +1,9 @@
 import * as SecureStore from "expo-secure-store";
+import { MMKV } from "react-native-mmkv";
 import { create } from "zustand";
-import { StateStorage, createJSONStorage, persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 
-const storage: StateStorage = {
-  getItem: async (key) => {
-    return await SecureStore.getItemAsync(key);
-  },
-  setItem: async (key, value) => {
-    await SecureStore.setItemAsync(key, value);
-  },
-  removeItem: async (key) => {
-    await SecureStore.deleteItemAsync(key);
-  },
-};
+const storage = new MMKV();
 
 interface User {
   id: string;
@@ -41,13 +32,8 @@ const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         try {
           await SecureStore.setItemAsync("token", token);
-          await SecureStore.setItemAsync("user", JSON.stringify(user));
-          set({
-            token,
-            user,
-            isLoading: false,
-            error: null,
-          });
+          storage.set("user", JSON.stringify(user));
+          set({ token, user, isLoading: false, error: null });
         } catch (error) {
           set({ isLoading: false, error: `Failed to sign in: ${error}` });
         }
@@ -56,8 +42,7 @@ const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         try {
           await SecureStore.deleteItemAsync("token");
-          await SecureStore.deleteItemAsync("user");
-          await SecureStore.deleteItemAsync("auth-storage");
+          storage.delete("user");
           set({ token: null, user: null, isLoading: false, error: null });
         } catch (error) {
           set({ isLoading: false, error: `Failed to sign out: ${error}` });
@@ -66,23 +51,34 @@ const useAuthStore = create<AuthState>()(
     }),
     {
       name: "auth-storage",
-      storage: createJSONStorage(() => storage),
-      partialize: (state) => ({
-        token: state.token,
-        user: state.user,
-      }),
+      storage: createJSONStorage(() => ({
+        getItem: async (name) => {
+          if (name === "token") {
+            return await SecureStore.getItemAsync(name);
+          }
+          return storage.getString(name) || null;
+        },
+        setItem: async (name, value) => {
+          if (name === "token") {
+            await SecureStore.setItemAsync(name, value);
+          } else {
+            storage.set(name, value);
+          }
+        },
+        removeItem: async (name) => {
+          if (name === "token") {
+            await SecureStore.deleteItemAsync(name);
+          } else {
+            storage.delete(name);
+          }
+        },
+      })),
+      partialize: (state) => ({ token: state.token, user: state.user }),
     },
   ),
 );
 
 export function useAuth() {
   const { user, token, isLoading, error, signIn, signOut } = useAuthStore();
-  return {
-    user,
-    token,
-    isLoading,
-    error,
-    signIn,
-    signOut,
-  };
+  return { user, token, isLoading, error, signIn, signOut };
 }

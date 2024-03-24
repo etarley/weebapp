@@ -12,10 +12,10 @@ import { registerUser } from "~/lib/api";
 
 const schema = z
   .object({
-    name: z.string().min(2),
-    email: z.string().email(),
+    name: z.string().min(2, "Name must be at least 2 characters long"),
+    email: z.string().email("Introduce a valid email"),
     confirmEmail: z.string().email(),
-    password: z.string().min(6),
+    password: z.string().min(6, "Password must be at least 6 characters"),
     confirmPassword: z.string().min(6),
   })
   .refine((data) => data.email === data.confirmEmail, {
@@ -28,11 +28,13 @@ const schema = z
   });
 
 type FormData = z.infer<typeof schema>;
+type SchemaKeys = keyof FormData;
 
 export default function SignupView() {
   const {
     control,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -40,26 +42,34 @@ export default function SignupView() {
 
   const router = useRouter();
 
-  const onSubmit = ({ name, email, password }: FormData) => {
-    registerUser(email, password, name);
-    Alert.alert(
-      "Registration Successful",
-      "You will be redirected to the login page.",
-      [
-        {
-          text: "OK",
-          onPress: () => {
-            router.replace("/login");
+  const onSubmit = async ({ name, email, password }: FormData) => {
+    try {
+      await registerUser(email, password, name);
+      Alert.alert(
+        "Registration Successful",
+        "You will be redirected to the login page.",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              router.replace("/login");
+            },
           },
-        },
-      ],
-    );
+        ],
+      );
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.cause as SchemaKeys, { message: error.message });
+      } else {
+        alert("An unexpected error occurred");
+      }
+    }
   };
 
   return (
     <View className="flex h-full flex-col items-center justify-center px-2 bg-background">
-      <View className="mx-auto flex w-full flex-col justify-center my-6 px-4 gap-4">
-        <View className="flex flex-col my-2 text-center">
+      <View className="mx-auto flex w-full flex-col justify-center my-2 px-4 gap-4">
+        <View className="flex flex-col text-center">
           <Text className="text-2xl font-semibold tracking-tight">
             Create an account
           </Text>
@@ -68,8 +78,8 @@ export default function SignupView() {
           </Text>
         </View>
         <View className="flex gap-4">
-          <View className="flex gap-2">
-            <InputLabel className="sr-only" inputId="name">
+          <View className="flex ">
+            <InputLabel className="" inputId="name">
               Name
             </InputLabel>
             <Controller
@@ -83,18 +93,15 @@ export default function SignupView() {
                   onBlur={onBlur}
                   onChangeText={onChange}
                   value={value}
+                  error={!!errors.name}
+                  helperText={errors.name?.message}
                 />
               )}
               name="name"
             />
-            {errors.name && (
-              <Text className="text-red-500 text-sm">
-                {errors.name.message}
-              </Text>
-            )}
           </View>
-          <View className="flex gap-2">
-            <InputLabel className="sr-only" inputId="email">
+          <View className="flex ">
+            <InputLabel className="" inputId="email">
               Email
             </InputLabel>
             <Controller
@@ -109,18 +116,15 @@ export default function SignupView() {
                   onBlur={onBlur}
                   onChangeText={onChange}
                   value={value}
+                  error={!!errors.email}
+                  helperText={errors.email?.message}
                 />
               )}
               name="email"
             />
-            {errors.email && (
-              <Text className="text-red-500 text-sm">
-                {errors.email.message}
-              </Text>
-            )}
           </View>
-          <View className="flex gap-2">
-            <InputLabel className="sr-only" inputId="confirmEmail">
+          <View className="flex ">
+            <InputLabel className="" inputId="confirmEmail">
               Confirm Email
             </InputLabel>
             <Controller
@@ -135,18 +139,15 @@ export default function SignupView() {
                   onBlur={onBlur}
                   onChangeText={onChange}
                   value={value}
+                  error={!!errors.confirmEmail}
+                  helperText={errors.confirmEmail?.message}
                 />
               )}
               name="confirmEmail"
             />
-            {errors.confirmEmail && (
-              <Text className="text-red-500 text-sm">
-                {errors.confirmEmail.message}
-              </Text>
-            )}
           </View>
-          <View className="flex gap-2">
-            <InputLabel className="sr-only" inputId="password">
+          <View className="flex ">
+            <InputLabel className="" inputId="password">
               Password
             </InputLabel>
             <Controller
@@ -162,18 +163,15 @@ export default function SignupView() {
                   onBlur={onBlur}
                   onChangeText={onChange}
                   value={value}
+                  error={!!errors.password}
+                  helperText={errors.password?.message}
                 />
               )}
               name="password"
             />
-            {errors.password && (
-              <Text className="text-red-500 text-sm">
-                {errors.password.message}
-              </Text>
-            )}
           </View>
-          <View className="flex gap-2">
-            <InputLabel className="sr-only" inputId="confirmPassword">
+          <View className="flex ">
+            <InputLabel className="" inputId="confirmPassword">
               Confirm Password
             </InputLabel>
             <Controller
@@ -189,15 +187,12 @@ export default function SignupView() {
                   onBlur={onBlur}
                   onChangeText={onChange}
                   value={value}
+                  error={!!errors.confirmPassword}
+                  helperText={errors.confirmPassword?.message}
                 />
               )}
               name="confirmPassword"
             />
-            {errors.confirmPassword && (
-              <Text className="text-red-500 text-sm">
-                {errors.confirmPassword.message}
-              </Text>
-            )}
           </View>
           <Button onPress={handleSubmit(onSubmit)}>Create Account</Button>
         </View>
